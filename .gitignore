@@ -1,0 +1,12 @@
+venv/          # ← あなたの仮想環境ディレクトリ
+.venv/
+env/
+.env           # ← 機密情報を含む
+.env.local
+.env.*.local
+__pycache__/   # ← Python実行時に生成される
+*.pyc
+*.pyo
+*.db
+*.sqlite
+*.sqlite3
