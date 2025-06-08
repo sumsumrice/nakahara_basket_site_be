@@ -6,9 +6,19 @@ from typing import List
 app = FastAPI(title="疎通確認API", version="1.0.0")
 
 # CORS設定（フロントエンドからのアクセスを許可）
-app.add_middleware(
+# ローカル開発時に使うための設定
+""" app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],  # Reactの開発サーバーのポート
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+) """
+
+# または、開発中は全てのオリジンを許可（本番では推奨されません）
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
