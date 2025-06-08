@@ -1,50 +1,60 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import os
-from dotenv import load_dotenv
+from pydantic import BaseModel
+from typing import List
 
-# 環境変数をロード
-load_dotenv()
+app = FastAPI(title="疎通確認API", version="1.0.0")
 
-app = FastAPI(
-    title="Your FastAPI App",
-    description="FastAPI application deployed on Render",
-    version="1.0.0"
-)
-
-# CORS設定（必要に応じて調整）
+# CORS設定（フロントエンドからのアクセスを許可）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 本番環境では具体的なドメインを指定
+    allow_origins=["http://localhost:3000"],  # Reactの開発サーバーのポート
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.get("/")
+# レスポンス用のモデル
+class HealthResponse(BaseModel):
+    status: str
+    message: str
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+
+# ヘルスチェック用エンドポイント
+@app.get("/", response_model=HealthResponse)
 async def root():
-    return {
-        "message": "Hello World! FastAPI is running on Render",
-        "status": "success"
-    }
+    return {"status": "success", "message": "バックエンドが正常に動作しています！"}
 
-@app.get("/health")
+@app.get("/health", response_model=HealthResponse)
 async def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy", "message": "API is running"}
 
-@app.get("/api/items/{item_id}")
-async def read_item(item_id: int, q: str = None):
-    if item_id < 1:
-        raise HTTPException(status_code=400, detail="Item ID must be positive")
-    
+# サンプルデータを返すエンドポイント
+@app.get("/users", response_model=List[UserResponse])
+async def get_users():
+    sample_users = [
+        {"id": 1, "name": "田中太郎", "email": "tanaka@example.com"},
+        {"id": 2, "name": "佐藤花子", "email": "sato@example.com"},
+        {"id": 3, "name": "鈴木一郎", "email": "suzuki@example.com"}
+    ]
+    return sample_users
+
+# POST用のサンプルエンドポイント
+class MessageRequest(BaseModel):
+    message: str
+
+@app.post("/echo", response_model=dict)
+async def echo_message(request: MessageRequest):
     return {
-        "item_id": item_id, 
-        "q": q,
-        "message": f"Item {item_id} retrieved successfully"
+        "received_message": request.message,
+        "response": f"サーバーから: {request.message}を受信しました！",
+        "timestamp": "2025-06-08"
     }
 
-# 環境変数からポートを取得（Renderが自動設定）
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
